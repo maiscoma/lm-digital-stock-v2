@@ -1,27 +1,21 @@
+/* src/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Definimos las variables de color del :root del .css para usarlas en Tailwind */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    --primary-color: #00d4ff;
+    --primary-dark: #0099cc;
+    --dark-bg: #0a0a0a;
+    --dark-card: #1a1a1a;
+    --dark-border: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  /* Aplicamos los colores de fondo y texto por defecto */
+  background-color: var(--dark-bg);
+  color: var(--text-primary);
 }
