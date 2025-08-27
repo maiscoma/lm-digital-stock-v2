@@ -1,8 +1,8 @@
 // src/firebase/config.js
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-import { initializeApp } from "firebase/app";
-
-// Tu configuración web de la app de Firebase, leyendo las variables de entorno
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -12,7 +12,11 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+// Inicializa Firebase App (previene re-inicialización)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-export default app;
+// Exporta las instancias de los servicios que usaremos en la app
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+export { app, db, auth };

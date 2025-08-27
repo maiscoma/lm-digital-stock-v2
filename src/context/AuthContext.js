@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import app from '@/firebase/config';
+import { auth } from '@/firebase/config';
 
 // 1. Creamos el Contexto
 const AuthContext = createContext();
@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const auth = getAuth(app);
         // onAuthStateChanged es un "oyente" de Firebase que se activa
         // cada vez que el estado de autenticación cambia (login/logout).
         const unsubscribe = onAuthStateChanged(auth, (user) => {

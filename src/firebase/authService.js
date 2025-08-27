@@ -5,10 +5,7 @@ import {
     signInWithEmailAndPassword,
     signOut,
 } from 'firebase/auth';
-import app from './config'; // Importamos nuestra configuración inicial de Firebase
-
-// Obtenemos la instancia de autenticación
-const auth = getAuth(app);
+import { auth } from './config';
 
 /**
  * Registra un nuevo usuario con correo y contraseña.
