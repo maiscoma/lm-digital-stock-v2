@@ -7,39 +7,39 @@ import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
 import { CgSpinner } from 'react-icons/cg';
 
-export const ProductForm = ({ isOpen, onClose, productToEdit }) => {
-    const [productData, setProductData] = useState({ name: '', sku: '', stock: 0, salePrice: '' });
+// Definimos un estado inicial vacío para reutilizarlo
+const EMPTY_PRODUCT_STATE = { name: '', sku: '', stock: 0, salePrice: '' };
+
+export const ProductForm = ({ isOpen, onClose, initialData = null }) => {
+    const [formData, setFormData] = useState(EMPTY_PRODUCT_STATE);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const isEditMode = initialData !== null;
+
     useEffect(() => {
-        if (productToEdit) {
-            // Si estamos editando, poblamos el formulario con los datos del producto
-            setProductData(productToEdit);
-        } else {
-            // Si estamos creando, reseteamos el formulario
-            setProductData({ name: '', sku: '', stock: 0, salePrice: '' });
+        if (isOpen) {
+            // AQUÍ ESTÁ LA CORRECCIÓN:
+            // Nos aseguramos de que initialData sea un objeto antes de usarlo.
+            // Si es null o undefined, usamos el estado vacío.
+            setFormData(initialData ? initialData : EMPTY_PRODUCT_STATE);
+            setError('');
         }
-    }, [productToEdit, isOpen]);
+    }, [isOpen, initialData]); // El dependency array se puede simplificar
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setProductData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        if (!productData.name || !productData.sku) {
-            setError("Nombre y SKU son campos obligatorios.");
-            return;
-        }
-
         // Limpiamos y validamos los datos numéricos
-        const stockAsNumber = Number(productData.stock);
-        const priceAsString = String(productData.salePrice);
-        const cleanedPrice = priceAsString.replace(/\./g, ''); // Quitamos puntos de miles
+        const stockAsNumber = Number(formData.stock);
+        const priceAsString = String(formData.salePrice);
+        const cleanedPrice = priceAsString.replace(/\./g, '');
         const priceAsNumber = Number(cleanedPrice);
 
         if (isNaN(stockAsNumber) || isNaN(priceAsNumber)) {
@@ -50,19 +50,19 @@ export const ProductForm = ({ isOpen, onClose, productToEdit }) => {
         setLoading(true);
         try {
             const dataToSave = {
-                name: productData.name,
-                sku: productData.sku,
+                name: formData.name,
+                sku: formData.sku,
                 stock: stockAsNumber,
                 salePrice: priceAsNumber,
+                status: 'active',
             };
 
-            // Lógica condicional: si hay un producto para editar, actualiza. Si no, crea.
-            if (productToEdit) {
-                await updateProduct(productToEdit.id, dataToSave);
+            if (isEditMode) {
+                await updateProduct(initialData.id, dataToSave);
             } else {
                 await addProduct(dataToSave);
             }
-            onClose(); // Cierra el modal en caso de éxito
+            onClose();
         } catch (err) {
             setError("Ocurrió un error al guardar el producto.");
             console.error(err);
@@ -77,24 +77,25 @@ export const ProductForm = ({ isOpen, onClose, productToEdit }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
             <div className="w-full max-w-lg p-8 space-y-6 border rounded-xl shadow-lg bg-dark-card border-dark-border">
                 <h2 className="text-2xl font-bold text-center text-text-primary">
-                    {productToEdit ? 'Editar Producto' : 'Añadir Nuevo Producto'}
+                    {isEditMode ? 'Editar Producto' : 'Añadir Nuevo Producto'}
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Los inputs usan formData, que ahora está garantizado que es un objeto */}
                     <div>
                         <label className="text-sm font-medium text-text-secondary">Nombre del Producto</label>
-                        <Input name="name" value={productData.name} onChange={handleChange} required />
+                        <Input name="name" value={formData.name} onChange={handleChange} required />
                     </div>
                     <div>
                         <label className="text-sm font-medium text-text-secondary">SKU</label>
-                        <Input name="sku" value={productData.sku} onChange={handleChange} required />
+                        <Input name="sku" value={formData.sku} onChange={handleChange} required />
                     </div>
                     <div>
                         <label className="text-sm font-medium text-text-secondary">Stock</label>
-                        <Input name="stock" type="number" value={productData.stock} onChange={handleChange} required />
+                        <Input name="stock" type="number" value={formData.stock} onChange={handleChange} required />
                     </div>
                     <div>
                         <label className="text-sm font-medium text-text-secondary">Precio de Venta</label>
-                        <Input name="salePrice" type="text" inputMode="numeric" pattern="[0-9.]*" value={productData.salePrice} onChange={handleChange} required />
+                        <Input name="salePrice" type="text" inputMode="numeric" value={formData.salePrice} onChange={handleChange} required />
                     </div>
 
                     {error && <p className="text-sm text-center text-red-500">{error}</p>}
@@ -105,12 +106,9 @@ export const ProductForm = ({ isOpen, onClose, productToEdit }) => {
                         </Button>
                         <Button type="submit" variant="primary" disabled={loading}>
                             {loading ? (
-                                <span className="flex items-center gap-2">
-                                    <CgSpinner className="animate-spin" />
-                                    Guardando...
-                                </span>
+                                <span className="flex items-center gap-2"><CgSpinner className="animate-spin" /> Guardando...</span>
                             ) : (
-                                productToEdit ? 'Actualizar Producto' : 'Guardar Producto'
+                                isEditMode ? 'Guardar Cambios' : 'Crear Producto'
                             )}
                         </Button>
                     </div>
