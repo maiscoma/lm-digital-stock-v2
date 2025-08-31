@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+// Asegúrate de que 'where' esté importado aquí
+import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 
 export const useProducts = () => {
@@ -10,14 +11,17 @@ export const useProducts = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Creamos una consulta a la colección 'products', ordenando por fecha de creación descendente
-        const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+        // ESTA ES LA ÚNICA CONSULTA QUE NECESITAMOS
+        // Incluye el filtro para no mostrar productos archivados.
+        const q = query(
+            collection(db, 'products'),
+            where("status", "!=", "archived"), // Filtra los archivados
+            orderBy('createdAt', 'desc')      // Ordena los restantes
+        );
 
-        // onSnapshot establece la escucha en tiempo real
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const productsData = [];
             querySnapshot.forEach((doc) => {
-                // Extraemos los datos y añadimos el ID del documento, que es crucial
                 productsData.push({ id: doc.id, ...doc.data() });
             });
             setProducts(productsData);
@@ -27,10 +31,8 @@ export const useProducts = () => {
             setLoading(false);
         });
 
-        // Esta función se ejecuta cuando el componente se desmonta.
-        // Es VITAL para limpiar la suscripción y evitar fugas de memoria.
         return () => unsubscribe();
-    }, []); // El array vacío asegura que el efecto se ejecute solo una vez
+    }, []);
 
     return { products, loading };
 };

@@ -1,28 +1,70 @@
 // src/firebase/firestoreService.js
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from './config'; // Importamos la instancia de la base de datos
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { db } from './config';
+
 
 /**
  * Añade un nuevo producto a la colección 'products'.
- * @param {object} productData - Los datos del producto a añadir.
- * @returns {Promise<DocumentReference>} La referencia al nuevo documento creado.
+ * @param {object} productData Los datos del producto.
  */
 export const addProduct = async (productData) => {
     try {
-        // Referencia a la colección 'products'
-        const productsCollection = collection(db, 'products');
-
-        // Añadimos el nuevo documento, incluyendo una marca de tiempo del servidor
-        const docRef = await addDoc(productsCollection, {
+        await addDoc(collection(db, 'products'), {
             ...productData,
-            createdAt: serverTimestamp(), // Sello de tiempo de creación
-            lastModified: serverTimestamp(), // Sello de tiempo de modificación
+            status: 'active', // Estado inicial por defecto
+            createdAt: serverTimestamp(),
+            lastModified: serverTimestamp(),
         });
-
-        console.log("Producto añadido con ID: ", docRef.id);
-        return docRef;
     } catch (error) {
         console.error("Error al añadir el producto: ", error);
         throw new Error("No se pudo añadir el producto.");
     }
 };
+
+/**
+ * Actualiza un producto existente en la colección 'products'.
+ * @param {string} productId - El ID del documento a actualizar.
+ * @param {object} productData - Los nuevos datos del producto.
+ * @returns {Promise<void>}
+ */
+export const updateProduct = async (productId, productData) => {
+    try {
+        // Creamos una referencia directa al documento del producto
+        const productRef = doc(db, 'products', productId);
+
+        // Actualizamos el documento con los nuevos datos y la fecha de modificación
+        await updateDoc(productRef, {
+            ...productData,
+            lastModified: serverTimestamp(),
+        });
+
+        console.log("Producto actualizado con ID: ", productId);
+    } catch (error) {
+        console.error("Error al actualizar el producto: ", error);
+        throw new Error("No se pudo actualizar el producto.");
+    }
+};
+/**
+ * Realiza un borrado lógico de un producto, marcándolo como 'archived'.
+ * @param {string} productId - El ID del documento a archivar.
+ * @returns {Promise<void>}
+ */
+export const deleteProduct = async (productId) => {
+    try {
+        const productRef = doc(db, 'products', productId);
+
+        // En lugar de borrar, actualizamos el estado a 'archived'
+        await updateDoc(productRef, {
+            status: 'archived',
+            lastModified: serverTimestamp(),
+        });
+
+        console.log("Producto archivado con ID: ", productId);
+    } catch (error) {
+        console.error("Error al archivar el producto: ", error);
+        throw new Error("No se pudo archivar el producto.");
+    }
+};
+
+// Aquí podrías añadir la función de transacción de stock que vimos la semana pasada
+// export const handleStockMovement = async ({...}) => { ... };
